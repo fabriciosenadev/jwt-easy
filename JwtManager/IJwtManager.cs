@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 
-namespace JwtManager;
+namespace JwtService;
 
 /// <summary>
 /// JWT token manager.
@@ -97,4 +97,42 @@ public interface IJwtManager
     /// <param name="token">The JWT token.</param>
     /// <returns>A dictionary containing the headers of the token.</returns>
     Dictionary<string, object> GetHeadersFromToken(string token);
+
+    // Código que já existe
+
+    /// <summary>
+    /// Gets the configured claims for the JWT token.
+    /// </summary>
+    /// <returns>A list of configured claims.</returns>
+    List<KeyValuePair<string, string>> GetClaims();
+
+    /// <summary>
+    /// Gets the configured issuer for the JWT token.
+    /// </summary>
+    /// <returns>The configured issuer.</returns>
+    string GetIssuer();
+
+    /// <summary>
+    /// Gets the configured audience for the JWT token.
+    /// </summary>
+    /// <returns>The configured audience.</returns>
+    string GetAudience();
+
+    /// <summary>
+    /// Gets the configured signing algorithm for the JWT token.
+    /// </summary>
+    /// <returns>The configured signing algorithm.</returns>
+    string GetSigningAlgorithm();
+
+    /// <summary>
+    /// Gets the configured header for the JWT token.
+    /// </summary>
+    /// <returns>A dictionary containing the configured header.</returns>
+    Dictionary<string, object> GetHeader();
+
+    /// <summary>
+    /// Gets the configured expiration date for the JWT token.
+    /// </summary>
+    /// <returns>The configured expiration date.</returns>
+    DateTime GetConfiguredExpirationDate();
 }
