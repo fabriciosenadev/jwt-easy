@@ -404,18 +404,6 @@ public class JwtManager : IJwtManager
     }
 
     // Validates the claim name format
-    //private bool IsValidClaimName(string claimName)
-    //{
-    //    if (string.IsNullOrEmpty(claimName))
-    //    {
-    //        return false;
-    //    }
-
-    //    // The claim name must start with a letter and can contain letters, numbers, underscores, and hyphens.
-    //    return claimName.StartsWith("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", StringComparison.OrdinalIgnoreCase) &&
-    //           claimName.All(c => char.IsLetterOrDigit(c) || c == '_' || c == '-');
-    //}
-
     private bool IsValidClaimName(string claimName)
     {
         if (string.IsNullOrEmpty(claimName))
