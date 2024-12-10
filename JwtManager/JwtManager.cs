@@ -5,7 +5,7 @@ using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 
-namespace JwtManager;
+namespace JwtService;
 
 /// <summary>
 /// JWT token manager.
@@ -20,6 +20,14 @@ public class JwtManager : IJwtManager
     private string _audience;
     private string _algorithm = SecurityAlgorithms.HmacSha256Signature;
     private Dictionary<string, object> _header = new Dictionary<string, object>();
+
+    public List<KeyValuePair<string, string>> GetClaims() => _claims;
+    public string GetIssuer() => _issuer;
+    public string GetAudience() => _audience;
+    public string GetSigningAlgorithm() => _algorithm;
+    public Dictionary<string, object> GetHeader() => _header;
+    public DateTime GetConfiguredExpirationDate() => GetExpirationDate();
+
 
     /// <summary>
     /// Constructor for the `JwtManager` class.
@@ -396,6 +404,18 @@ public class JwtManager : IJwtManager
     }
 
     // Validates the claim name format
+    //private bool IsValidClaimName(string claimName)
+    //{
+    //    if (string.IsNullOrEmpty(claimName))
+    //    {
+    //        return false;
+    //    }
+
+    //    // The claim name must start with a letter and can contain letters, numbers, underscores, and hyphens.
+    //    return claimName.StartsWith("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", StringComparison.OrdinalIgnoreCase) &&
+    //           claimName.All(c => char.IsLetterOrDigit(c) || c == '_' || c == '-');
+    //}
+
     private bool IsValidClaimName(string claimName)
     {
         if (string.IsNullOrEmpty(claimName))
@@ -403,8 +423,21 @@ public class JwtManager : IJwtManager
             return false;
         }
 
-        // The claim name must start with a letter and can contain letters, numbers, underscores, and hyphens.
-        return claimName.StartsWith("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ", StringComparison.OrdinalIgnoreCase) &&
-               claimName.All(c => char.IsLetterOrDigit(c) || c == '_' || c == '-');
+        // Verifica se o nome da claim começa com uma letra
+        if (!char.IsLetter(claimName[0]))
+        {
+            return false;
+        }
+
+        // Verifica se o nome da claim contém apenas caracteres válidos
+        foreach (char c in claimName)
+        {
+            if (!char.IsLetterOrDigit(c) && c != '_' && c != '-')
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

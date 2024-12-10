@@ -1,4 +1,4 @@
-﻿namespace JwtManager;
+﻿namespace JwtService;
 
 public enum ExpirationType
 {
