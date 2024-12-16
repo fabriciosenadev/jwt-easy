@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JwtManager", "JwtManager\JwtManager.csproj", "{C746AC10-C77D-45DE-8BBC-898B313B9D6B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JwtEasy", "JwtManager\JwtEasy.csproj", "{C746AC10-C77D-45DE-8BBC-898B313B9D6B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JwtManagerLibTests", "tests\JwtManagerTests\JwtManagerLibTests.csproj", "{1CAA66C4-29B6-4830-A18E-75C3839E7E32}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JwtGeneratorLibTests", "tests\JwtManagerTests\JwtGeneratorLibTests.csproj", "{1CAA66C4-29B6-4830-A18E-75C3839E7E32}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

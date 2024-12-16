@@ -5,12 +5,12 @@ using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 
-namespace JwtService;
+namespace JwtEasy;
 
 /// <summary>
 /// JWT token manager.
 /// </summary>
-public class JwtManager : IJwtManager
+public class JwtGenerator : IJwtGenerator
 {
     private string _secret;
     private List<KeyValuePair<string, string>> _claims = new List<KeyValuePair<string, string>>();
@@ -29,17 +29,9 @@ public class JwtManager : IJwtManager
     public DateTime GetConfiguredExpirationDate() => GetExpirationDate();
 
 
-    /// <summary>
-    /// Constructor for the `JwtManager` class.
-    /// </summary>
-    /// <param name="secret">The secret key to sign the token.</param>
-    public JwtManager(string secret)
+    public JwtGenerator()
     {
-        if (string.IsNullOrEmpty(secret))
-        {
-            throw new ArgumentNullException(nameof(secret), "The secret key is required.");
-        }
-        _secret = secret;
+        
     }
 
     /// <summary>
@@ -47,7 +39,7 @@ public class JwtManager : IJwtManager
     /// </summary>
     /// <param name="secret">The secret key to sign the token.</param>
     /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    public IJwtManager StartGeneration(string secret)
+    public IJwtGenerator WithSecret(string secret)
     {
         if (string.IsNullOrEmpty(secret))
         {
@@ -63,7 +55,7 @@ public class JwtManager : IJwtManager
     /// </summary>
     /// <param name="claims">A list of claims to be added to the token.</param>
     /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    public IJwtManager WithClaims(List<KeyValuePair<string, string>> claims)
+    public IJwtGenerator WithClaims(List<KeyValuePair<string, string>> claims)
     {
         if (claims != null)
         {
@@ -104,7 +96,7 @@ public class JwtManager : IJwtManager
     /// <param name="expirationType">The type of expiration (minutes, hours, days).</param>
     /// <param name="expirationValue">The expiration value. Default is 7 days.</param>
     /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    public IJwtManager WithExpiration(ExpirationType expirationType, int expirationValue)
+    public IJwtGenerator WithExpiration(ExpirationType expirationType, int expirationValue)
     {
         if (expirationValue <= 0)
         {
@@ -121,7 +113,7 @@ public class JwtManager : IJwtManager
     /// </summary>
     /// <param name="issuer">The issuer of the token.</param>
     /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    public IJwtManager WithIssuer(string issuer)
+    public IJwtGenerator WithIssuer(string issuer)
     {
         _issuer = issuer;
         return this;
@@ -132,7 +124,7 @@ public class JwtManager : IJwtManager
     /// </summary>
     /// <param name="audience">The audience of the token.</param>
     /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    public IJwtManager WithAudience(string audience)
+    public IJwtGenerator WithAudience(string audience)
     {
         _audience = audience;
         return this;
@@ -143,7 +135,7 @@ public class JwtManager : IJwtManager
     /// </summary>
     /// <param name="algorithm">The signing algorithm. Default is HMAC SHA256.</param>
     /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    public IJwtManager WithSigningAlgorithm(string algorithm)
+    public IJwtGenerator WithSigningAlgorithm(string algorithm)
     {
         if (string.IsNullOrEmpty(algorithm))
         {
@@ -159,7 +151,7 @@ public class JwtManager : IJwtManager
     /// </summary>
     /// <param name="header">A dictionary of key-value pairs to be added to the header.</param>
     /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    public IJwtManager WithHeader(Dictionary<string, object> header)
+    public IJwtGenerator WithHeader(Dictionary<string, object> header)
     {
         if (header != null)
         {

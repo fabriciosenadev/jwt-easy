@@ -1,25 +1,25 @@
 ﻿using System.Security.Claims;
 
-namespace JwtService;
+namespace JwtEasy;
 
 /// <summary>
 /// JWT token manager.
 /// </summary>
-public interface IJwtManager
+public interface IJwtGenerator
 {
     /// <summary>
     /// Starts the generation of a new JWT token.
     /// </summary>
     /// <param name="secret">The secret key to sign the token.</param>
     /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    IJwtManager StartGeneration(string secret);
+    IJwtGenerator WithSecret(string secret);
 
     /// <summary>
     /// Adds claims to the JWT token.
     /// </summary>
     /// <param name="claims">A list of claims to be added to the token.</param>
     /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    IJwtManager WithClaims(List<KeyValuePair<string, string>> claims);
+    IJwtGenerator WithClaims(List<KeyValuePair<string, string>> claims);
 
     /// <summary>
     /// Sets the expiration date of the JWT token.
@@ -27,35 +27,35 @@ public interface IJwtManager
     /// <param name="expirationType">The type of expiration (minutes, hours, days).</param>
     /// <param name="expirationValue">The expiration value. Default is 7 days.</param>
     /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    IJwtManager WithExpiration(ExpirationType expirationType, int expirationValue);
+    IJwtGenerator WithExpiration(ExpirationType expirationType, int expirationValue);
 
     /// <summary>
     /// Sets the issuer of the JWT token.
     /// </summary>
     /// <param name="issuer">The issuer of the token.</param>
     /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    IJwtManager WithIssuer(string issuer);
+    IJwtGenerator WithIssuer(string issuer);
 
     /// <summary>
     /// Sets the audience of the JWT token.
     /// </summary>
     /// <param name="audience">The audience of the token.</param>
     /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    IJwtManager WithAudience(string audience);
+    IJwtGenerator WithAudience(string audience);
 
     /// <summary>
     /// Sets the signing algorithm for the JWT token.
     /// </summary>
     /// <param name="algorithm">The signing algorithm. Default is HMAC SHA256.</param>
     /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    IJwtManager WithSigningAlgorithm(string algorithm);
+    IJwtGenerator WithSigningAlgorithm(string algorithm);
 
     /// <summary>
     /// Adds additional information to the JWT token header.
     /// </summary>
     /// <param name="header">A dictionary of key-value pairs to be added to the header.</param>
     /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    IJwtManager WithHeader(Dictionary<string, object> header);
+    IJwtGenerator WithHeader(Dictionary<string, object> header);
 
     /// <summary>
     /// Generates the JWT token.
