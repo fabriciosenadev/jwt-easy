@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\JwtManager\JwtManager.csproj" />
+    <ProjectReference Include="..\..\JwtManager\JwtEasy.csproj" />
   </ItemGroup>
 
   <ItemGroup>

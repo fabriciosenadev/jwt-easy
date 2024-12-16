@@ -3,24 +3,25 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using JwtService;
+using JwtEasy;
 using Microsoft.IdentityModel.Tokens;
 using Xunit;
 using Moq;
+using JwtManagerTests;
 
-namespace JwtManagerTests;
+namespace JwtGeneratorTests;
 
-public class JwtManagerUnitTests
+public class JwtGeneratorUnitTests
 {
     [Fact]
     public void StartGeneration_ValidSecret_StoresSecret()
     {
         // Arrange
         string secret = "my_secret_key";
-        IJwtManager jwtManager = new JwtManager(secret);
+        IJwtGenerator jwtGenerator = new JwtGenerator();
 
         // Act
-        jwtManager.StartGeneration(secret);
+        jwtGenerator.WithSecret(secret);
 
         // Assert
         // Here, we need a way to access the _secret field from the implementation
@@ -28,8 +29,8 @@ public class JwtManagerUnitTests
         // use reflection to access the private field.
         // WARNING: Using reflection to access private fields is considered
         // bad practice and should be used with caution.
-        var secretField = jwtManager.GetType().GetField("_secret", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        Assert.Equal(secret, secretField.GetValue(jwtManager));
+        var secretField = jwtGenerator.GetType().GetField("_secret", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.Equal(secret, secretField.GetValue(jwtGenerator));
     }
 
     [Fact]
@@ -37,17 +38,17 @@ public class JwtManagerUnitTests
     {
         // Arrange
         string secret = null;
-        IJwtManager jwtManager = new JwtManager("initial_secret");
+        IJwtGenerator jwtGenerator = new JwtGenerator();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => jwtManager.StartGeneration(secret));
+        Assert.Throws<ArgumentNullException>(() => jwtGenerator.WithSecret(secret));
     }
 
     [Fact]
     public void WithClaims_ValidClaims_StoresClaims()
     {
         // Arrange
-        IJwtManager jwtManager = new JwtManager("secret");
+        IJwtGenerator jwtGenerator = new JwtGenerator().WithSecret("secret");
         List<KeyValuePair<string, string>> claims = new List<KeyValuePair<string, string>>
     {
         new KeyValuePair<string, string>("department", "marketing"),
@@ -55,18 +56,18 @@ public class JwtManagerUnitTests
     };
 
         // Act
-        jwtManager.WithClaims(claims);
+        jwtGenerator.WithClaims(claims);
 
         // Assert
-        var claimsField = jwtManager.GetType().GetField("_claims", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        Assert.Equal(claims, claimsField.GetValue(jwtManager));
+        var claimsField = jwtGenerator.GetType().GetField("_claims", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.Equal(claims, claimsField.GetValue(jwtGenerator));
     }
 
     [Fact]
     public void WithClaims_EmptyClaims_ThrowsArgumentException()
     {
         // Arrange
-        IJwtManager jwtManager = new JwtManager("secret");
+        IJwtGenerator jwtManager = new JwtGenerator().WithSecret("secret");
         List<KeyValuePair<string, string>> claims = new List<KeyValuePair<string, string>>();
 
         // Act & Assert
@@ -77,149 +78,149 @@ public class JwtManagerUnitTests
     public void WithClaims_NullClaims_DoesNotStoreClaims()
     {
         // Arrange
-        IJwtManager jwtManager = new JwtManager("secret");
+        IJwtGenerator jwtGenerator = new JwtGenerator().WithSecret("secret");
         List<KeyValuePair<string, string>> claims = null;
 
         // Act
-        jwtManager.WithClaims(claims);
+        jwtGenerator.WithClaims(claims);
 
         // Assert
-        var claimsField = jwtManager.GetType().GetField("_claims", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        Assert.Empty((List<KeyValuePair<string, string>>)claimsField.GetValue(jwtManager));
+        var claimsField = jwtGenerator.GetType().GetField("_claims", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.Empty((List<KeyValuePair<string, string>>)claimsField.GetValue(jwtGenerator));
     }
 
     [Fact]
     public void WithClaims_InvalidClaimName_ThrowsArgumentException()
     {
         // Arrange
-        IJwtManager jwtManager = new JwtManager("secret");
+        IJwtGenerator jwtGenerator = new JwtGenerator().WithSecret("secret");
         List<KeyValuePair<string, string>> claims = new List<KeyValuePair<string, string>>
         {
             new KeyValuePair<string, string>("123department", "marketing")
         };
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => jwtManager.WithClaims(claims));
+        Assert.Throws<ArgumentException>(() => jwtGenerator.WithClaims(claims));
     }
 
     [Fact]
     public void WithClaims_ClaimNameStartsWithNumber_ThrowsArgumentException()
     {
         // Arrange
-        IJwtManager jwtManager = new JwtManager("secret");
+        IJwtGenerator jwtGenerator = new JwtGenerator().WithSecret("secret");
         List<KeyValuePair<string, string>> claims = new List<KeyValuePair<string, string>>
         {
             new KeyValuePair<string, string>("1department", "marketing") // Invalid claim name
         };
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => jwtManager.WithClaims(claims));
+        Assert.Throws<ArgumentException>(() => jwtGenerator.WithClaims(claims));
     }
 
     [Fact]
     public void WithClaims_ClaimNameContainsSpecialCharacters_ThrowsArgumentException()
     {
         // Arrange
-        IJwtManager jwtManager = new JwtManager("secret");
+        IJwtGenerator jwtGenerator = new JwtGenerator().WithSecret("secret");
         List<KeyValuePair<string, string>> claims = new List<KeyValuePair<string, string>>
         {
             new KeyValuePair<string, string>("department!", "marketing") // Invalid claim name
         };
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => jwtManager.WithClaims(claims));
+        Assert.Throws<ArgumentException>(() => jwtGenerator.WithClaims(claims));
     }
     [Fact]
     public void WithExpiration_ValidExpiration_StoresExpiration()
     {
         // Arrange
-        IJwtManager jwtManager = new JwtManager("secret");
+        IJwtGenerator jwtGenerator = new JwtGenerator().WithSecret("secret");
         ExpirationType expirationType = ExpirationType.Hours;
         int expirationValue = 1;
 
         // Act
-        jwtManager.WithExpiration(expirationType, expirationValue);
+        jwtGenerator.WithExpiration(expirationType, expirationValue);
 
         // Assert
-        var expirationTypeField = jwtManager.GetType().GetField("_expirationType", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        var expirationValueField = jwtManager.GetType().GetField("_expirationValue", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        Assert.Equal(expirationType, expirationTypeField.GetValue(jwtManager));
-        Assert.Equal(expirationValue, expirationValueField.GetValue(jwtManager));
+        var expirationTypeField = jwtGenerator.GetType().GetField("_expirationType", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var expirationValueField = jwtGenerator.GetType().GetField("_expirationValue", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.Equal(expirationType, expirationTypeField.GetValue(jwtGenerator));
+        Assert.Equal(expirationValue, expirationValueField.GetValue(jwtGenerator));
     }
 
     [Fact]
     public void WithExpiration_InvalidExpiration_ThrowsArgumentException()
     {
         // Arrange
-        IJwtManager jwtManager = new JwtManager("secret");
+        IJwtGenerator jwtGenerator = new JwtGenerator().WithSecret("secret");
         ExpirationType expirationType = ExpirationType.Days;
         int expirationValue = 0;
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => jwtManager.WithExpiration(expirationType, expirationValue));
+        Assert.Throws<ArgumentException>(() => jwtGenerator.WithExpiration(expirationType, expirationValue));
     }
 
     [Fact]
     public void WithIssuer_ValidIssuer_StoresIssuer()
     {
         // Arrange
-        IJwtManager jwtManager = new JwtManager("secret");
+        IJwtGenerator jwtGenerator = new JwtGenerator().WithSecret("secret");
         string issuer = "my-app";
 
         // Act
-        jwtManager.WithIssuer(issuer);
+        jwtGenerator.WithIssuer(issuer);
 
         // Assert
-        var issuerField = jwtManager.GetType().GetField("_issuer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        Assert.Equal(issuer, issuerField.GetValue(jwtManager));
+        var issuerField = jwtGenerator.GetType().GetField("_issuer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.Equal(issuer, issuerField.GetValue(jwtGenerator));
     }
 
     [Fact]
     public void WithAudience_ValidAudience_StoresAudience()
     {
         // Arrange
-        IJwtManager jwtManager = new JwtManager("secret");
+        IJwtGenerator jwtGenerator = new JwtGenerator().WithSecret("secret");
         string audience = "my-client";
 
         // Act
-        jwtManager.WithAudience(audience);
+        jwtGenerator.WithAudience(audience);
 
         // Assert
-        var audienceField = jwtManager.GetType().GetField("_audience", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        Assert.Equal(audience, audienceField.GetValue(jwtManager));
+        var audienceField = jwtGenerator.GetType().GetField("_audience", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.Equal(audience, audienceField.GetValue(jwtGenerator));
     }
 
     [Fact]
     public void WithSigningAlgorithm_ValidAlgorithm_StoresAlgorithm()
     {
         // Arrange
-        IJwtManager jwtManager = new JwtManager("secret");
+        IJwtGenerator jwtGenerator = new JwtGenerator().WithSecret("secret");
         string algorithm = "HS256";
 
         // Act
-        jwtManager.WithSigningAlgorithm(algorithm);
+        jwtGenerator.WithSigningAlgorithm(algorithm);
 
         // Assert
-        var algorithmField = jwtManager.GetType().GetField("_algorithm", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        Assert.Equal(algorithm, algorithmField.GetValue(jwtManager));
+        var algorithmField = jwtGenerator.GetType().GetField("_algorithm", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.Equal(algorithm, algorithmField.GetValue(jwtGenerator));
     }
 
     [Fact]
     public void WithSigningAlgorithm_InvalidAlgorithm_ThrowsArgumentException()
     {
         // Arrange
-        IJwtManager jwtManager = new JwtManager("secret");
+        IJwtGenerator jwtGenerator = new JwtGenerator().WithSecret("secret");
         string algorithm = "";
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => jwtManager.WithSigningAlgorithm(algorithm));
+        Assert.Throws<ArgumentException>(() => jwtGenerator.WithSigningAlgorithm(algorithm));
     }
 
     [Fact]
     public void WithHeader_ValidHeader_StoresHeader()
     {
         // Arrange
-        IJwtManager jwtManager = new JwtManager("secret");
+        IJwtGenerator jwtGenerator = new JwtGenerator().WithSecret("secret");
         Dictionary<string, object> header = new Dictionary<string, object>
         {
             { "alg", "HS256" },
@@ -227,26 +228,26 @@ public class JwtManagerUnitTests
         };
 
         // Act
-        jwtManager.WithHeader(header);
+        jwtGenerator.WithHeader(header);
 
         // Assert
-        var headerField = jwtManager.GetType().GetField("_header", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        Assert.Equal(header, headerField.GetValue(jwtManager));
+        var headerField = jwtGenerator.GetType().GetField("_header", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.Equal(header, headerField.GetValue(jwtGenerator));
     }
 
     [Fact]
     public void WithHeader_NullHeader_DoesNotStoreHeader()
     {
         // Arrange
-        IJwtManager jwtManager = new JwtManager("secret");
+        IJwtGenerator jwtGenerator = new JwtGenerator().WithSecret("secret");
         Dictionary<string, object> header = null;
 
         // Act
-        jwtManager.WithHeader(header);
+        jwtGenerator.WithHeader(header);
 
         // Assert
-        var headerField = jwtManager.GetType().GetField("_header", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        Assert.Empty((Dictionary<string, object>)headerField.GetValue(jwtManager));
+        var headerField = jwtGenerator.GetType().GetField("_header", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        Assert.Empty((Dictionary<string, object>)headerField.GetValue(jwtGenerator));
     }
 
     [Fact]
@@ -269,7 +270,7 @@ public class JwtManagerUnitTests
         { "typ", "JWT" }
     };
 
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret)
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret)
             .WithClaims(claims)
             .WithIssuer(issuer)
             .WithAudience(audience)
@@ -277,7 +278,7 @@ public class JwtManagerUnitTests
             .WithHeader(header);
 
         // Act
-        var token = jwtManager.GenerateToken();
+        var token = jwtGenerator.GenerateToken();
 
         // Assert
         Assert.NotNull(token); // Ensures that the token was generated
@@ -320,7 +321,7 @@ public class JwtManagerUnitTests
     public void GetClaimsFromToken_WithValidToken_ReturnsClaims()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
         var claims = new Dictionary<string, string>
         {
             { "department", "IT" },
@@ -329,7 +330,7 @@ public class JwtManagerUnitTests
         var token = GenerateValidToken(claims);
 
         // Act
-        var result = jwtManager.GetClaimsFromToken(token);
+        var result = jwtGenerator.GetClaimsFromToken(token);
 
         // Assert
         Assert.NotNull(result);
@@ -341,10 +342,10 @@ public class JwtManagerUnitTests
     public void GetClaimsFromToken_WithNullToken_ThrowsArgumentException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
 
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => jwtManager.GetClaimsFromToken(null));
+        var exception = Assert.Throws<ArgumentException>(() => jwtGenerator.GetClaimsFromToken(null));
         Assert.Equal("The token cannot be null or empty. (Parameter 'token')", exception.Message);
     }
 
@@ -352,10 +353,10 @@ public class JwtManagerUnitTests
     public void GetClaimsFromToken_WithEmptyToken_ThrowsArgumentException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
 
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => jwtManager.GetClaimsFromToken(string.Empty));
+        var exception = Assert.Throws<ArgumentException>(() => jwtGenerator.GetClaimsFromToken(string.Empty));
         Assert.Equal("The token cannot be null or empty. (Parameter 'token')", exception.Message);
     }
 
@@ -363,11 +364,11 @@ public class JwtManagerUnitTests
     public void GetClaimsFromToken_WithInvalidToken_ThrowsException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
         var invalidToken = "invalid_token";
 
         // Act & Assert
-        var exception = Assert.Throws<Exception>(() => jwtManager.GetClaimsFromToken(invalidToken));
+        var exception = Assert.Throws<Exception>(() => jwtGenerator.GetClaimsFromToken(invalidToken));
         Assert.Equal("Invalid token.", exception.Message);
     }
 
@@ -375,11 +376,11 @@ public class JwtManagerUnitTests
     public void IsTokenExpired_WithExpiredToken_ReturnsTrue()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
         var expiredToken = JwtTokenMocker.GenerateExpiredToken(DateTime.UtcNow.AddMinutes(-5)); // Token expired 5 minutes ago
 
         // Act
-        var result = jwtManager.IsTokenExpired(expiredToken);
+        var result = jwtGenerator.IsTokenExpired(expiredToken);
 
         // Assert
         Assert.True(result); // Token is expired
@@ -389,11 +390,11 @@ public class JwtManagerUnitTests
     public void IsTokenExpired_WithValidToken_ReturnsFalse()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
         var validToken = JwtTokenMocker.GenerateExpiredToken(DateTime.UtcNow.AddMinutes(5)); // Token valid for 5 more minutes
 
         // Act
-        var result = jwtManager.IsTokenExpired(validToken);
+        var result = jwtGenerator.IsTokenExpired(validToken);
 
         // Assert
         Assert.False(result); // Token is not expired
@@ -403,10 +404,10 @@ public class JwtManagerUnitTests
     public void IsTokenExpired_WithNullToken_ThrowsArgumentException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
 
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => jwtManager.IsTokenExpired(null));
+        var exception = Assert.Throws<ArgumentException>(() => jwtGenerator.IsTokenExpired(null));
         Assert.Equal("The token cannot be null or empty. (Parameter 'token')", exception.Message);
     }
 
@@ -414,10 +415,10 @@ public class JwtManagerUnitTests
     public void IsTokenExpired_WithEmptyToken_ThrowsArgumentException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
 
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => jwtManager.IsTokenExpired(string.Empty));
+        var exception = Assert.Throws<ArgumentException>(() => jwtGenerator.IsTokenExpired(string.Empty));
         Assert.Equal("The token cannot be null or empty. (Parameter 'token')", exception.Message);
     }
 
@@ -425,11 +426,11 @@ public class JwtManagerUnitTests
     public void IsTokenExpired_WithInvalidToken_ThrowsException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
         var invalidToken = "invalid_token";
 
         // Act & Assert
-        var exception = Assert.Throws<Exception>(() => jwtManager.IsTokenExpired(invalidToken));
+        var exception = Assert.Throws<Exception>(() => jwtGenerator.IsTokenExpired(invalidToken));
         Assert.Equal("Invalid token.", exception.Message);
     }
 
@@ -437,12 +438,12 @@ public class JwtManagerUnitTests
     public void GetIssuerFromToken_WithValidToken_ReturnsIssuer()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
         var issuer = "test-issuer";
         var token = JwtTokenMocker.GenerateTokenWithIssuer(issuer);
 
         // Act
-        var result = jwtManager.GetIssuerFromToken(token);
+        var result = jwtGenerator.GetIssuerFromToken(token);
 
         // Assert
         Assert.Equal(issuer, result);
@@ -452,11 +453,11 @@ public class JwtManagerUnitTests
     public void GetIssuerFromToken_WithTokenWithoutIssuer_ReturnsNull()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
         var token = JwtTokenMocker.GenerateTokenWithIssuer(null); // Token without emissor
 
         // Act
-        var result = jwtManager.GetIssuerFromToken(token);
+        var result = jwtGenerator.GetIssuerFromToken(token);
 
         // Assert
         Assert.Null(result);
@@ -466,10 +467,10 @@ public class JwtManagerUnitTests
     public void GetIssuerFromToken_WithNullToken_ThrowsArgumentException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
 
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => jwtManager.GetIssuerFromToken(null));
+        var exception = Assert.Throws<ArgumentException>(() => jwtGenerator.GetIssuerFromToken(null));
         Assert.Equal("The token cannot be null or empty. (Parameter 'token')", exception.Message);
     }
 
@@ -477,10 +478,10 @@ public class JwtManagerUnitTests
     public void GetIssuerFromToken_WithEmptyToken_ThrowsArgumentException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
 
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => jwtManager.GetIssuerFromToken(string.Empty));
+        var exception = Assert.Throws<ArgumentException>(() => jwtGenerator.GetIssuerFromToken(string.Empty));
         Assert.Equal("The token cannot be null or empty. (Parameter 'token')", exception.Message);
     }
 
@@ -488,11 +489,11 @@ public class JwtManagerUnitTests
     public void GetIssuerFromToken_WithInvalidToken_ThrowsException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
         var invalidToken = "invalid_token";
 
         // Act & Assert
-        var exception = Assert.Throws<Exception>(() => jwtManager.GetIssuerFromToken(invalidToken));
+        var exception = Assert.Throws<Exception>(() => jwtGenerator.GetIssuerFromToken(invalidToken));
         Assert.Equal("Invalid token.", exception.Message);
     }
 
@@ -501,11 +502,11 @@ public class JwtManagerUnitTests
     {
         // Arrange
         var audience = "test-audience";
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
         var token = JwtTokenMocker.GenerateTokenWithAudience(audience);
 
         // Act
-        var result = jwtManager.GetAudienceFromToken(token);
+        var result = jwtGenerator.GetAudienceFromToken(token);
 
         // Assert
         Assert.Equal(audience, result);
@@ -515,11 +516,11 @@ public class JwtManagerUnitTests
     public void GetAudienceFromToken_TokenWithoutAudience_ReturnsNull()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
         var token = JwtTokenMocker.GenerateTokenWithoutAudience();
 
         // Act
-        var result = jwtManager.GetAudienceFromToken(token);
+        var result = jwtGenerator.GetAudienceFromToken(token);
 
         // Assert
         Assert.Null(result);
@@ -529,11 +530,11 @@ public class JwtManagerUnitTests
     public void GetAudienceFromToken_InvalidToken_ThrowsException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
         var invalidToken = "InvalidTokenString";
 
         // Act & Assert
-        var exception = Assert.Throws<Exception>(() => jwtManager.GetAudienceFromToken(invalidToken));
+        var exception = Assert.Throws<Exception>(() => jwtGenerator.GetAudienceFromToken(invalidToken));
         Assert.Contains("Invalid token.", exception.Message);
     }
 
@@ -541,10 +542,10 @@ public class JwtManagerUnitTests
     public void GetAudienceFromToken_NullToken_ThrowsArgumentException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
 
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => jwtManager.GetAudienceFromToken(null));
+        var exception = Assert.Throws<ArgumentException>(() => jwtGenerator.GetAudienceFromToken(null));
         Assert.Contains("The token cannot be null or empty.", exception.Message);
     }
 
@@ -552,10 +553,10 @@ public class JwtManagerUnitTests
     public void GetAudienceFromToken_EmptyToken_ThrowsArgumentException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
 
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => jwtManager.GetAudienceFromToken(string.Empty));
+        var exception = Assert.Throws<ArgumentException>(() => jwtGenerator.GetAudienceFromToken(string.Empty));
         Assert.Contains("The token cannot be null or empty.", exception.Message);
     }
 
@@ -563,7 +564,7 @@ public class JwtManagerUnitTests
     public void GetHeadersFromToken_ValidToken_ReturnsHeaders()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
         var headers = new Dictionary<string, object>
         {
             { "kid", "test-key-id" },
@@ -572,7 +573,7 @@ public class JwtManagerUnitTests
         var token = JwtTokenMocker.GenerateTokenWithHeader(headers);
 
         // Act
-        var result = jwtManager.GetHeadersFromToken(token);
+        var result = jwtGenerator.GetHeadersFromToken(token);
 
         // Assert
         Assert.NotNull(result);
@@ -584,11 +585,11 @@ public class JwtManagerUnitTests
     public void GetHeadersFromToken_InvalidToken_ThrowsException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
         var invalidToken = "invalid.token.value";
 
         // Act & Assert
-        var exception = Assert.Throws<Exception>(() => jwtManager.GetHeadersFromToken(invalidToken));
+        var exception = Assert.Throws<Exception>(() => jwtGenerator.GetHeadersFromToken(invalidToken));
         Assert.Contains("Invalid token", exception.Message);
     }
 
@@ -596,23 +597,23 @@ public class JwtManagerUnitTests
     public void GetHeadersFromToken_NullOrEmptyToken_ThrowsArgumentException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => jwtManager.GetHeadersFromToken(null));
-        Assert.Throws<ArgumentException>(() => jwtManager.GetHeadersFromToken(string.Empty));
+        Assert.Throws<ArgumentException>(() => jwtGenerator.GetHeadersFromToken(null));
+        Assert.Throws<ArgumentException>(() => jwtGenerator.GetHeadersFromToken(string.Empty));
     }
 
     [Fact]
     public void GetHeadersFromToken_TokenWithoutJwtSecurityToken_ThrowsException()
     {
         // Arrange
-        var jwtManager = new JwtManager(JwtTokenMocker.Secret);
+        var jwtGenerator = new JwtGenerator().WithSecret(JwtTokenMocker.Secret);
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = "non-jwt-token";
 
         // Act & Assert
-        var exception = Assert.Throws<Exception>(() => jwtManager.GetHeadersFromToken(token));
+        var exception = Assert.Throws<Exception>(() => jwtGenerator.GetHeadersFromToken(token));
         Assert.Contains("Invalid token.", exception.Message); // Verify correct message
     }
 }
