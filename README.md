@@ -2,6 +2,22 @@
 
 This library allow to generate and get information from jwt as a easy tool to implemened on your code
 
+## How to install on you project
+
+you can navigate even nuget in Visual Studio or can run the command
+
+``` powershell
+Install-Package JwtEasy
+```
+> use -Version x.x.x after the end of command to select specific version
+
+or
+
+``` bash
+dotnet add package JwtEasy
+```
+> use --version x.x.x after the end of command to select specific version
+
 ## How to start using as a service
 
 To start using as a service you need to register in your dependency injection class, like you can see below:
