@@ -4,6 +4,23 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+	  <!-- Metadata for NuGet package -->
+	  <Authors>Fabricio R. Sena</Authors>
+	  <Company>Fabricio R. Sena</Company>
+	  <PackageId>YourPackageId</PackageId>
+	  <Version>1.0.0</Version>
+	  <Description>A ultility library to turn easy the jwt use.</Description>
+	  <PackageTags>utility;library;jwt</PackageTags>
+	  <RepositoryUrl>https://github.com/fabriciosenadev/jwt-easy</RepositoryUrl>
+	  <PackageProjectUrl>https://github.com/YourRepo</PackageProjectUrl>
+	  <RepositoryType>git</RepositoryType>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <!-- Replace "MIT" with your license -->
+	  <IncludeSymbols>true</IncludeSymbols>
+	  <!-- Optional: Include symbols for debugging -->
+	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  <!-- Automatically generate NuGet package on build -->
   </PropertyGroup>
 
   <ItemGroup>
