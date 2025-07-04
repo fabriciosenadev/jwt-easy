@@ -1,423 +1,426 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 
-namespace JwtEasy;
-
-/// <summary>
-/// JWT token manager.
-/// </summary>
-public class JwtGenerator : IJwtGenerator
+namespace JwtEasy
 {
-    private string _secret;
-    private List<KeyValuePair<string, string>> _claims = new List<KeyValuePair<string, string>>();
-    private ExpirationType _expirationType = ExpirationType.Days;
-    private int _expirationValue = 7;
-    private string _issuer;
-    private string _audience;
-    private string _algorithm = SecurityAlgorithms.HmacSha256Signature;
-    private Dictionary<string, object> _header = new Dictionary<string, object>();
-
-    public List<KeyValuePair<string, string>> GetClaims() => _claims;
-    public string GetIssuer() => _issuer;
-    public string GetAudience() => _audience;
-    public string GetSigningAlgorithm() => _algorithm;
-    public Dictionary<string, object> GetHeader() => _header;
-    public DateTime GetConfiguredExpirationDate() => GetExpirationDate();
-
-
-    public JwtGenerator()
-    {
-        
-    }
-
     /// <summary>
-    /// Starts the generation of a new JWT token.
+    /// JWT token manager.
     /// </summary>
-    /// <param name="secret">The secret key to sign the token.</param>
-    /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    public IJwtGenerator WithSecret(string secret)
+    public class JwtGenerator : IJwtGenerator
     {
-        if (string.IsNullOrEmpty(secret))
+        private string _secret;
+        private List<KeyValuePair<string, string>> _claims = new List<KeyValuePair<string, string>>();
+        private ExpirationType _expirationType = ExpirationType.Days;
+        private int _expirationValue = 7;
+        private string _issuer;
+        private string _audience;
+        private string _algorithm = SecurityAlgorithms.HmacSha256Signature;
+        private Dictionary<string, object> _header = new Dictionary<string, object>();
+
+        public List<KeyValuePair<string, string>> GetClaims() => _claims;
+        public string GetIssuer() => _issuer;
+        public string GetAudience() => _audience;
+        public string GetSigningAlgorithm() => _algorithm;
+        public Dictionary<string, object> GetHeader() => _header;
+        public DateTime GetConfiguredExpirationDate() => GetExpirationDate();
+
+
+        public JwtGenerator()
         {
-            throw new ArgumentNullException(nameof(secret), "The secret key is required.");
+
         }
 
-        _secret = secret; // Stores the secret key in the current instance
-        return this; // Returns the current instance
-    }
-
-    /// <summary>
-    /// Adds claims to the JWT token.
-    /// </summary>
-    /// <param name="claims">A list of claims to be added to the token.</param>
-    /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    public IJwtGenerator WithClaims(List<KeyValuePair<string, string>> claims)
-    {
-        if (claims != null)
+        /// <summary>
+        /// Starts the generation of a new JWT token.
+        /// </summary>
+        /// <param name="secret">The secret key to sign the token.</param>
+        /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
+        public IJwtGenerator WithSecret(string secret)
         {
-            // Checks if the claims list is not null and not empty
-            if (claims.Count == 0)
+            if (string.IsNullOrEmpty(secret))
             {
-                throw new ArgumentException("The claims list cannot be empty.", nameof(claims));
+                throw new ArgumentNullException(nameof(secret), "The secret key is required.");
             }
 
-            // Checks if all claims have valid key and value
-            foreach (var claim in claims)
+            _secret = secret; // Stores the secret key in the current instance
+            return this; // Returns the current instance
+        }
+
+        /// <summary>
+        /// Adds claims to the JWT token.
+        /// </summary>
+        /// <param name="claims">A list of claims to be added to the token.</param>
+        /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
+        public IJwtGenerator WithClaims(List<KeyValuePair<string, string>> claims)
+        {
+            if (claims != null)
             {
-                if (string.IsNullOrEmpty(claim.Key))
+                // Checks if the claims list is not null and not empty
+                if (claims.Count == 0)
                 {
-                    throw new ArgumentException("The claim key cannot be null or empty.", nameof(claims));
-                }
-                if (string.IsNullOrEmpty(claim.Value))
-                {
-                    throw new ArgumentException("The claim value cannot be null or empty.", nameof(claims));
+                    throw new ArgumentException("The claims list cannot be empty.", nameof(claims));
                 }
 
-                // Validates the claim name format
-                if (!IsValidClaimName(claim.Key))
+                // Checks if all claims have valid key and value
+                foreach (var claim in claims)
                 {
-                    throw new ArgumentException($"Invalid claim name: {claim.Key}. Claim names must start with a letter and can contain letters, numbers, underscores, and hyphens.", nameof(claims));
+                    if (string.IsNullOrEmpty(claim.Key))
+                    {
+                        throw new ArgumentException("The claim key cannot be null or empty.", nameof(claims));
+                    }
+                    if (string.IsNullOrEmpty(claim.Value))
+                    {
+                        throw new ArgumentException("The claim value cannot be null or empty.", nameof(claims));
+                    }
+
+                    // Validates the claim name format
+                    if (!IsValidClaimName(claim.Key))
+                    {
+                        throw new ArgumentException($"Invalid claim name: {claim.Key}. Claim names must start with a letter and can contain letters, numbers, underscores, and hyphens.", nameof(claims));
+                    }
+                }
+
+                _claims = claims;
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the expiration date of the JWT token.
+        /// </summary>
+        /// <param name="expirationType">The type of expiration (minutes, hours, days).</param>
+        /// <param name="expirationValue">The expiration value. Default is 7 days.</param>
+        /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
+        public IJwtGenerator WithExpiration(ExpirationType expirationType, int expirationValue)
+        {
+            if (expirationValue <= 0)
+            {
+                throw new ArgumentException("The expiration value must be greater than zero.", nameof(expirationValue));
+            }
+
+            _expirationType = expirationType;
+            _expirationValue = expirationValue;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the issuer of the JWT token.
+        /// </summary>
+        /// <param name="issuer">The issuer of the token.</param>
+        /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
+        public IJwtGenerator WithIssuer(string issuer)
+        {
+            _issuer = issuer;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the audience of the JWT token.
+        /// </summary>
+        /// <param name="audience">The audience of the token.</param>
+        /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
+        public IJwtGenerator WithAudience(string audience)
+        {
+            _audience = audience;
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the signing algorithm for the JWT token.
+        /// </summary>
+        /// <param name="algorithm">The signing algorithm. Default is HMAC SHA256.</param>
+        /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
+        public IJwtGenerator WithSigningAlgorithm(string algorithm)
+        {
+            if (string.IsNullOrEmpty(algorithm))
+            {
+                throw new ArgumentException("The signing algorithm cannot be null or empty.", nameof(algorithm));
+            }
+
+            _algorithm = algorithm;
+            return this;
+        }
+
+        /// <summary>
+        /// Adds additional information to the JWT token header.
+        /// </summary>
+        /// <param name="header">A dictionary of key-value pairs to be added to the header.</param>
+        /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
+        public IJwtGenerator WithHeader(Dictionary<string, object> header)
+        {
+            if (header != null)
+            {
+                foreach (var item in header)
+                {
+                    _header.Add(item.Key, item.Value);
                 }
             }
 
-            _claims = claims;
+            return this;
         }
 
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the expiration date of the JWT token.
-    /// </summary>
-    /// <param name="expirationType">The type of expiration (minutes, hours, days).</param>
-    /// <param name="expirationValue">The expiration value. Default is 7 days.</param>
-    /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    public IJwtGenerator WithExpiration(ExpirationType expirationType, int expirationValue)
-    {
-        if (expirationValue <= 0)
+        /// <summary>
+        /// Generates the JWT token.
+        /// </summary>
+        /// <returns>The generated JWT token.</returns>
+        public string GenerateToken()
         {
-            throw new ArgumentException("The expiration value must be greater than zero.", nameof(expirationValue));
-        }
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_secret);
 
-        _expirationType = expirationType;
-        _expirationValue = expirationValue;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the issuer of the JWT token.
-    /// </summary>
-    /// <param name="issuer">The issuer of the token.</param>
-    /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    public IJwtGenerator WithIssuer(string issuer)
-    {
-        _issuer = issuer;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the audience of the JWT token.
-    /// </summary>
-    /// <param name="audience">The audience of the token.</param>
-    /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    public IJwtGenerator WithAudience(string audience)
-    {
-        _audience = audience;
-        return this;
-    }
-
-    /// <summary>
-    /// Sets the signing algorithm for the JWT token.
-    /// </summary>
-    /// <param name="algorithm">The signing algorithm. Default is HMAC SHA256.</param>
-    /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    public IJwtGenerator WithSigningAlgorithm(string algorithm)
-    {
-        if (string.IsNullOrEmpty(algorithm))
-        {
-            throw new ArgumentException("The signing algorithm cannot be null or empty.", nameof(algorithm));
-        }
-
-        _algorithm = algorithm;
-        return this;
-    }
-
-    /// <summary>
-    /// Adds additional information to the JWT token header.
-    /// </summary>
-    /// <param name="header">A dictionary of key-value pairs to be added to the header.</param>
-    /// <returns>The current instance of `IJwtManager` for method chaining.</returns>
-    public IJwtGenerator WithHeader(Dictionary<string, object> header)
-    {
-        if (header != null)
-        {
-            foreach (var item in header)
+            var tokenDescription = new SecurityTokenDescriptor
             {
-                _header.Add(item.Key, item.Value);
+                Subject = new ClaimsIdentity(
+                    _claims.Select(c => new Claim(c.Key, c.Value)).ToArray()
+                ),
+                Expires = GetExpirationDate(),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), _algorithm), // Creates the signing credentials
+                Issuer = _issuer,
+                Audience = _audience,
+            };
+
+            if (_header.Count > 0)
+            {
+                tokenDescription.AdditionalHeaderClaims = _header; // Adds information to the header
+            }
+
+            var token = tokenHandler.CreateToken(tokenDescription);
+            return tokenHandler.WriteToken(token);
+        }
+
+        /// <summary>
+        /// Extracts claims from a JWT token.
+        /// </summary>
+        /// <param name="token">The JWT token.</param>
+        /// <returns>A list of claims extracted from the token.</returns>
+        public List<Claim> GetClaimsFromToken(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                throw new ArgumentException("The token cannot be null or empty.", nameof(token));
+            }
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_secret)),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = false,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            try
+            {
+                SecurityToken validatedToken;
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
+                return principal.Claims.ToList();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Invalid token.", ex);
             }
         }
 
-        return this;
-    }
-
-    /// <summary>
-    /// Generates the JWT token.
-    /// </summary>
-    /// <returns>The generated JWT token.</returns>
-    public string GenerateToken()
-    {
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_secret);
-
-        var tokenDescription = new SecurityTokenDescriptor
+        /// <summary>
+        /// Checks if a JWT token is expired.
+        /// </summary>
+        /// <param name="token">The JWT token.</param>
+        /// <returns>True if the token is expired, false otherwise.</returns>
+        public bool IsTokenExpired(string token)
         {
-            Subject = new ClaimsIdentity(
-                _claims.Select(c => new Claim(c.Key, c.Value)).ToArray()
-            ),
-            Expires = GetExpirationDate(),
-            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), _algorithm), // Creates the signing credentials
-            Issuer = _issuer,
-            Audience = _audience,
-        };
-
-        if (_header.Count > 0)
-        {
-            tokenDescription.AdditionalHeaderClaims = _header; // Adds information to the header
-        }
-
-        var token = tokenHandler.CreateToken(tokenDescription);
-        return tokenHandler.WriteToken(token);
-    }
-
-    /// <summary>
-    /// Extracts claims from a JWT token.
-    /// </summary>
-    /// <param name="token">The JWT token.</param>
-    /// <returns>A list of claims extracted from the token.</returns>
-    public List<Claim> GetClaimsFromToken(string token)
-    {
-        if (string.IsNullOrEmpty(token))
-        {
-            throw new ArgumentException("The token cannot be null or empty.", nameof(token));
-        }
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var validationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_secret)),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = false,
-            ClockSkew = TimeSpan.Zero
-        };
-
-        try
-        {
-            SecurityToken validatedToken;
-            var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
-            return principal.Claims.ToList();
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Invalid token.", ex);
-        }
-    }
-
-    /// <summary>
-    /// Checks if a JWT token is expired.
-    /// </summary>
-    /// <param name="token">The JWT token.</param>
-    /// <returns>True if the token is expired, false otherwise.</returns>
-    public bool IsTokenExpired(string token)
-    {
-        if (string.IsNullOrEmpty(token))
-        {
-            throw new ArgumentException("The token cannot be null or empty.", nameof(token));
-        }
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var validationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_secret)),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
-        };
-
-        try
-        {
-            SecurityToken validatedToken;
-            tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
-            return false; // Token is not expired
-        }
-        catch (SecurityTokenExpiredException)
-        {
-            return true; // Token is expired
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Invalid token.", ex);
-        }
-    }
-
-    /// <summary>
-    /// Extracts the issuer from a JWT token.
-    /// </summary>
-    /// <param name="token">The JWT token.</param>
-    /// <returns>The issuer of the token, or null if not found.</returns>
-    public string GetIssuerFromToken(string token)
-    {
-        if (string.IsNullOrEmpty(token))
-        {
-            throw new ArgumentException("The token cannot be null or empty.", nameof(token));
-        }
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var validationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_secret)),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = false,
-            ClockSkew = TimeSpan.Zero
-        };
-
-        try
-        {
-            SecurityToken validatedToken;
-            var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
-            return principal.FindFirst(JwtRegisteredClaimNames.Iss)?.Value;
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Invalid token.", ex);
-        }
-    }
-
-    /// <summary>
-    /// Extracts the audience from a JWT token.
-    /// </summary>
-    /// <param name="token">The JWT token.</param>
-    /// <returns>The audience of the token, or null if not found.</returns>
-    public string GetAudienceFromToken(string token)
-    {
-        if (string.IsNullOrEmpty(token))
-        {
-            throw new ArgumentException("The token cannot be null or empty.", nameof(token));
-        }
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var validationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_secret)),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = false,
-            ClockSkew = TimeSpan.Zero
-        };
-
-        try
-        {
-            SecurityToken validatedToken;
-            var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
-            return principal.FindFirst(JwtRegisteredClaimNames.Aud)?.Value;
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Invalid token.", ex);
-        }
-    }
-
-    /// <summary>
-    /// Extracts the headers from a JWT token.
-    /// </summary>
-    /// <param name="token">The JWT token.</param>
-    /// <returns>A dictionary containing the headers of the token.</returns>
-    public Dictionary<string, object> GetHeadersFromToken(string token)
-    {
-        if (string.IsNullOrEmpty(token))
-        {
-            throw new ArgumentException("The token cannot be null or empty.", nameof(token));
-        }
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var validationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_secret)),
-            ValidateIssuer = false,
-            ValidateAudience = false,
-            ValidateLifetime = false,
-            ClockSkew = TimeSpan.Zero
-        };
-
-        try
-        {
-            SecurityToken validatedToken;
-            var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
-
-            if (validatedToken is JwtSecurityToken jwtToken)
+            if (string.IsNullOrEmpty(token))
             {
-                return new Dictionary<string, object>(jwtToken.Header);
+                throw new ArgumentException("The token cannot be null or empty.", nameof(token));
             }
-            else
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var validationParameters = new TokenValidationParameters
             {
-                throw new Exception("Invalid token format.");
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_secret)),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            try
+            {
+                SecurityToken validatedToken;
+                tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
+                return false; // Token is not expired
+            }
+            catch (SecurityTokenExpiredException)
+            {
+                return true; // Token is expired
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Invalid token.", ex);
             }
         }
-        catch (Exception ex)
-        {
-            throw new Exception("Invalid token.", ex);
-        }
-    }
 
-    private DateTime GetExpirationDate()
-    {
-        switch (_expirationType)
+        /// <summary>
+        /// Extracts the issuer from a JWT token.
+        /// </summary>
+        /// <param name="token">The JWT token.</param>
+        /// <returns>The issuer of the token, or null if not found.</returns>
+        public string GetIssuerFromToken(string token)
         {
-            case ExpirationType.Minutes:
-                return DateTime.UtcNow.AddMinutes(_expirationValue);
-            case ExpirationType.Hours:
-                return DateTime.UtcNow.AddHours(_expirationValue);
-            case ExpirationType.Days:
-                return DateTime.UtcNow.AddDays(_expirationValue);
-            default:
-                return DateTime.UtcNow.AddDays(7); // Default expiration of 7 days
-        }
-    }
+            if (string.IsNullOrEmpty(token))
+            {
+                throw new ArgumentException("The token cannot be null or empty.", nameof(token));
+            }
 
-    // Validates the claim name format
-    private bool IsValidClaimName(string claimName)
-    {
-        if (string.IsNullOrEmpty(claimName))
-        {
-            return false;
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_secret)),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = false,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            try
+            {
+                SecurityToken validatedToken;
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
+                return principal.FindFirst(JwtRegisteredClaimNames.Iss)?.Value;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Invalid token.", ex);
+            }
         }
 
-        // Verifica se o nome da claim começa com uma letra
-        if (!char.IsLetter(claimName[0]))
+        /// <summary>
+        /// Extracts the audience from a JWT token.
+        /// </summary>
+        /// <param name="token">The JWT token.</param>
+        /// <returns>The audience of the token, or null if not found.</returns>
+        public string GetAudienceFromToken(string token)
         {
-            return false;
+            if (string.IsNullOrEmpty(token))
+            {
+                throw new ArgumentException("The token cannot be null or empty.", nameof(token));
+            }
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_secret)),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = false,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            try
+            {
+                SecurityToken validatedToken;
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
+                return principal.FindFirst(JwtRegisteredClaimNames.Aud)?.Value;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Invalid token.", ex);
+            }
         }
 
-        // Verifica se o nome da claim contém apenas caracteres válidos
-        foreach (char c in claimName)
+        /// <summary>
+        /// Extracts the headers from a JWT token.
+        /// </summary>
+        /// <param name="token">The JWT token.</param>
+        /// <returns>A dictionary containing the headers of the token.</returns>
+        public Dictionary<string, object> GetHeadersFromToken(string token)
         {
-            if (!char.IsLetterOrDigit(c) && c != '_' && c != '-')
+            if (string.IsNullOrEmpty(token))
+            {
+                throw new ArgumentException("The token cannot be null or empty.", nameof(token));
+            }
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_secret)),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = false,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            try
+            {
+                SecurityToken validatedToken;
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out validatedToken);
+
+                if (validatedToken is JwtSecurityToken jwtToken)
+                {
+                    return new Dictionary<string, object>(jwtToken.Header);
+                }
+                else
+                {
+                    throw new Exception("Invalid token format.");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Invalid token.", ex);
+            }
+        }
+
+        private DateTime GetExpirationDate()
+        {
+            switch (_expirationType)
+            {
+                case ExpirationType.Minutes:
+                    return DateTime.UtcNow.AddMinutes(_expirationValue);
+                case ExpirationType.Hours:
+                    return DateTime.UtcNow.AddHours(_expirationValue);
+                case ExpirationType.Days:
+                    return DateTime.UtcNow.AddDays(_expirationValue);
+                default:
+                    return DateTime.UtcNow.AddDays(7); // Default expiration of 7 days
+            }
+        }
+
+        // Validates the claim name format
+        private bool IsValidClaimName(string claimName)
+        {
+            if (string.IsNullOrEmpty(claimName))
             {
                 return false;
             }
-        }
 
-        return true;
+            // Verifica se o nome da claim começa com uma letra
+            if (!char.IsLetter(claimName[0]))
+            {
+                return false;
+            }
+
+            // Verifica se o nome da claim contém apenas caracteres válidos
+            foreach (char c in claimName)
+            {
+                if (!char.IsLetterOrDigit(c) && c != '_' && c != '-')
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
+
 }
