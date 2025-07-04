@@ -1,10 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-	<TargetFrameworks>net9;net8;net7;netstandard2.1</TargetFrameworks>
+	<TargetFrameworks>net9;net8;net7</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	<LangVersion>latest</LangVersion>
 
 	  <!-- Metadata for NuGet package -->
 	  <Authors>Fabricio R. Sena</Authors>
