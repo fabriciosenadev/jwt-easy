@@ -9,7 +9,7 @@
 	  <Authors>Fabricio R. Sena</Authors>
 	  <Company>Fabricio R. Sena</Company>
 	  <PackageId>JwtEasy</PackageId>
-	  <Version>1.0.0</Version>
+	  <Version>1.1.0</Version>
 	  <Description>A ultility library to turn easy the jwt use.</Description>
 	  <PackageTags>utility;library;jwt</PackageTags>
 	  <RepositoryUrl>https://github.com/fabriciosenadev/jwt-easy</RepositoryUrl>
