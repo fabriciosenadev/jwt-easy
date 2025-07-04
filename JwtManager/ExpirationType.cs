@@ -1,8 +1,9 @@
-﻿namespace JwtEasy;
-
-public enum ExpirationType
+﻿namespace JwtEasy
 {
-    Minutes,
-    Hours,
-    Days
+    public enum ExpirationType
+    {
+        Minutes,
+        Hours,
+        Days
+    }
 }
