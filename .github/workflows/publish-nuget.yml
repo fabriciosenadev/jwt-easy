@@ -21,7 +21,6 @@ jobs:
         dotnet-version: |
           8.0.x
           7.0.x
-        dotnet-quality: 'release'
 
     # Step 3: Restaurar dependências
     - name: Restore dependencies
