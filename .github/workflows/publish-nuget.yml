@@ -3,36 +3,42 @@ name: Publish to NuGet
 on:
   push:
     tags:
-      - 'v*.*.*' # Executa apenas quando você cria uma tag no formato v1.0.0
+      - 'v*.*.*'
 
 jobs:
   publish:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Checkout do código
     - name: Checkout code
       uses: actions/checkout@v3
 
-    # Step 2: Configurar .NET
-    - name: Setup .NET
+    - name: Install .NET 9 SDK manually
+      run: |
+        wget https://dot.net/v1/dotnet-install.sh
+        chmod +x dotnet-install.sh
+        ./dotnet-install.sh -c 9.0 -InstallDir $HOME/.dotnet
+      shell: bash
+
+    - name: Add .NET tools to PATH
+      run: echo "$HOME/.dotnet" >> $GITHUB_PATH
+
+    - name: Setup .NET (for 8 and 7)
       uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: '8.0'
+        dotnet-version: |
+          8.0.x
+          7.0.x
 
-    # Step 3: Restaurar dependências
     - name: Restore dependencies
       run: dotnet restore
 
-    # Step 4: Compilar o projeto
     - name: Build the project
       run: dotnet build --configuration Release --no-restore
 
-    # Step 5: Gerar o pacote NuGet
     - name: Pack NuGet package
       run: dotnet pack --configuration Release --no-build --output ./nupkg
 
-    # Step 6: Publicar no NuGet
     - name: Publish to NuGet
       env:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
